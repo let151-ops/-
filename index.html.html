@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>구구단 놀이터</title>
+<style>
+  :root{
+    --bg:#FFF8F0; --text:#4A4A5A; --white:#FFFFFF;
+    --pink:#FFD6E0;   --pink-d:#F7A8BC;
+    --mint:#C8F2E0;   --mint-d:#8EDBB9;
+    --sky:#CDE7FF;    --sky-d:#9CC8F2;
+    --yellow:#FFF1B8; --yellow-d:#F0D77A;
+    --lav:#E6DCFF;    --lav-d:#C2B0F2;
+    --peach:#FFE0CC;  --peach-d:#F5BE9C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+    background:var(--bg); color:var(--text);
+    min-height:100vh; display:flex; justify-content:center;
+    padding:20px 14px 40px; font-size:22px; line-height:1.5;
+  }
+  .app{width:100%; max-width:560px}
+  .hidden{display:none !important}
+
+  /* ---------- 공통 버튼 ---------- */
+  .btn{
+    border:none; border-radius:28px; font-family:inherit; font-weight:800;
+    color:var(--text); cursor:pointer; touch-action:manipulation;
+    box-shadow:0 6px 0 var(--shadow,#e3d8cc);
+    transition:transform .08s, box-shadow .08s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn:active{transform:translateY(4px); box-shadow:0 2px 0 var(--shadow,#e3d8cc)}
+  .btn.big{width:100%; padding:18px; font-size:26px; margin-top:10px}
+  .btn.small{padding:10px 18px; font-size:20px; border-radius:22px}
+  .pink{background:var(--pink); --shadow:var(--pink-d)}
+  .mint{background:var(--mint); --shadow:var(--mint-d)}
+  .sky{background:var(--sky); --shadow:var(--sky-d)}
+  .yellow{background:var(--yellow); --shadow:var(--yellow-d)}
+  .lav{background:var(--lav); --shadow:var(--lav-d)}
+  .peach{background:var(--peach); --shadow:var(--peach-d)}
+  .white{background:var(--white); --shadow:#E8DFD5}
+
+  /* ---------- 카드 ---------- */
+  .card{
+    background:var(--white); border-radius:32px; padding:22px;
+    margin-bottom:18px; box-shadow:0 6px 18px rgba(200,180,160,.18);
+  }
+  .card h2{font-size:26px; margin-bottom:8px}
+  .desc{font-size:20px; color:#7A7A8A}
+  .center{text-align:center}
+
+  /* ---------- 홈 ---------- */
+  .home-head{text-align:center; margin:6px 0 20px}
+  .home-head h1{font-size:40px}
+  .sub{font-size:22px; color:#7A7A8A}
+  .dan-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:12px}
+  .btn.dan{font-size:30px; padding:20px 0; border-radius:26px}
+  .best{font-size:22px; margin-top:6px}
+  .sound-row{text-align:center}
+
+  /* ---------- 문제 화면 ---------- */
+  .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px}
+  .mode-label{font-size:24px; font-weight:800}
+  .status{display:flex; gap:10px; justify-content:center; margin-bottom:12px; flex-wrap:wrap}
+  .pill{background:var(--white); border-radius:20px; padding:6px 18px; font-size:22px; font-weight:800;
+        box-shadow:0 3px 10px rgba(200,180,160,.18)}
+  .timer-wrap{margin-bottom:14px}
+  .timer-bar{height:22px; background:var(--white); border-radius:12px; overflow:hidden;
+             box-shadow:inset 0 2px 4px rgba(0,0,0,.06)}
+  .timer-fill{height:100%; width:100%; background:var(--mint-d); border-radius:12px; transition:width .1s linear}
+  .timer-text{text-align:center; font-size:28px; font-weight:800; margin-top:4px}
+  .timer-wrap.warn .timer-fill{background:var(--pink-d)}
+  .timer-wrap.warn .timer-text{color:#E0607E; animation:pulse 1s infinite}
+
+  .question-card{
+    background:var(--white); border-radius:36px; padding:26px 16px;
+    display:flex; justify-content:center; align-items:center; gap:16px; flex-wrap:wrap;
+    box-shadow:0 6px 18px rgba(200,180,160,.18);
+  }
+  .question{font-size:clamp(48px,13vw,72px); font-weight:900; letter-spacing:2px}
+  .answer-box{
+    min-width:130px; height:100px; border-radius:28px; background:var(--yellow);
+    display:flex; align-items:center; justify-content:center;
+    font-size:clamp(48px,13vw,68px); font-weight:900; border:4px dashed var(--yellow-d);
+  }
+  .answer-box.empty{color:#C9B676}
+  .answer-box.good{background:var(--mint); border:4px solid var(--mint-d); animation:pop .35s}
+  .answer-box.bad{background:var(--pink); border:4px solid var(--pink-d); animation:shake .4s}
+  .answer-box.nudge{animation:shake .3s}
+
+  .feedback{min-height:44px; text-align:center; font-size:26px; font-weight:800; margin:14px 0 6px}
+  .feedback.good{color:#2FA77A}
+  .feedback.bad{color:#E0607E}
+  .hint{background:var(--sky); border-radius:24px; padding:12px 16px; font-size:21px;
+        text-align:center; margin-bottom:10px; word-break:keep-all}
+
+  .numpad{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:6px}
+  .numpad .btn{height:74px; font-size:34px; border-radius:26px}
+  .numpad .btn.fn{font-size:24px}
+  .play-actions{display:flex; justify-content:center; gap:12px; margin-top:20px; flex-wrap:wrap}
+
+  .countdown{
+    position:fixed; inset:0; background:rgba(255,248,240,.92);
+    display:flex; align-items:center; justify-content:center;
+    font-size:120px; font-weight:900; color:#E0607E; z-index:10;
+  }
+  .countdown.pop{animation:pop .5s}
+
+  /* ---------- 결과 ---------- */
+  .res-emoji{font-size:72px}
+  .stars{font-size:44px; letter-spacing:6px; margin:4px 0}
+  .res-msg{font-size:22px; color:#7A7A8A}
+  .res-stats{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:16px}
+  .stat{border-radius:24px; padding:14px 6px; font-size:18px; font-weight:700}
+  .stat-num{font-size:36px; font-weight:900}
+  .record{font-size:24px; font-weight:800; margin-top:14px; color:#C99A1C}
+  .wrong-list{list-style:none; margin:8px 0 4px}
+  .wrong-list li{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;
+    background:var(--bg); border-radius:20px; padding:10px 16px; margin-bottom:8px;
+  }
+  .wq{font-size:26px; font-weight:800}
+  .wm{font-size:18px; color:#E0607E}
+  .result-actions{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+
+  @keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+
+  @media (max-width:400px){
+    body{font-size:20px}
+    .btn.dan{font-size:26px; padding:16px 0}
+    .numpad .btn{height:66px; font-size:30px}
+    .home-head h1{font-size:34px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= 홈 ================= -->
+  <section id="home" class="screen">
+    <header class="home-head">
+      <h1>🐣 구구단 놀이터</h1>
+      <p class="sub">오늘은 몇 단을 연습해 볼까요?</p>
+    </header>
+
+    <div class="card">
+      <h2>🎯 단 골라서 연습</h2>
+      <p class="desc">틀린 문제는 마지막에 한 번 더 나와요.</p>
+      <div class="dan-grid" id="danGrid"></div>
+    </div>
+
+    <div class="card">
+      <h2>🎲 랜덤 연습</h2>
+      <p class="desc">2단부터 9단까지 섞어서 20문제가 나와요.</p>
+      <button class="btn big mint" onclick="startRandom()">랜덤 연습 시작</button>
+    </div>
+
+    <div class="card">
+      <h2>⏱️ 실전 모드</h2>
+      <p class="desc">60초 동안 몇 문제를 맞힐 수 있을까요?</p>
+      <p class="best">🏆 최고 기록: <b id="bestScore">0</b>개</p>
+      <button class="btn big yellow" onclick="startReal()">실전 모드 시작</button>
+    </div>
+
+    <div class="sound-row">
+      <button class="btn small lav" id="soundBtn" onclick="toggleSound()">🔊 소리 켜짐</button>
+    </div>
+  </section>
+
+  <!-- ================= 문제 풀이 ================= -->
+  <section id="play" class="screen hidden">
+    <div class="topbar">
+      <button class="btn small peach" onclick="goHome()">🏠 처음으로</button>
+      <div class="mode-label" id="modeLabel"></div>
+    </div>
+
+    <div class="status">
+      <div class="pill" id="progressText"></div>
+      <div class="pill">✅ <span id="okCount">0</span></div>
+      <div class="pill">❌ <span id="ngCount">0</span></div>
+    </div>
+
+    <div class="timer-wrap hidden" id="timerWrap">
+      <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+      <div class="timer-text"><span id="timerText">60</span>초</div>
+    </div>
+
+    <div class="question-card">
+      <div class="question"><span id="qA">?</span> × <span id="qB">?</span> =</div>
+      <div class="answer-box empty" id="answerBox">?</div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="hint hidden" id="hintBox"></div>
+
+    <div class="numpad">
+      <button class="btn white" onclick="pressNum('1')">1</button>
+      <button class="btn white" onclick="pressNum('2')">2</button>
+      <button class="btn white" onclick="pressNum('3')">3</button>
+      <button class="btn white" onclick="pressNum('4')">4</button>
+      <button class="btn white" onclick="pressNum('5')">5</button>
+      <button class="btn white" onclick="pressNum('6')">6</button>
+      <button class="btn white" onclick="pressNum('7')">7</button>
+      <button class="btn white" onclick="pressNum('8')">8</button>
+      <button class="btn white" onclick="pressNum('9')">9</button>
+      <button class="btn pink fn" onclick="delNum()">⌫ 지우기</button>
+      <button class="btn white" onclick="pressNum('0')">0</button>
+      <button class="btn mint fn" onclick="submit()">확인 ✔</button>
+    </div>
+
+    <div class="play-actions">
+      <button class="btn small sky" id="hintBtn" onclick="showHint()">💡 힌트</button>
+      <button class="btn small lav" id="stopBtn" onclick="endGame()">그만하고 결과 보기</button>
+    </div>
+
+    <div class="countdown hidden" id="countdown"></div>
+  </section>
+
+  <!-- ================= 결과 ================= -->
+  <section id="result" class="screen hidden">
+    <div class="card center">
+      <div class="res-emoji" id="resEmoji">🎉</div>
+      <h2 id="resTitle"></h2>
+      <div class="stars" id="resStars"></div>
+      <p class="res-msg" id="resMsg"></p>
+      <div class="res-stats">
+        <div class="stat mint"><div class="stat-num" id="resOk">0</div>맞힌 문제</div>
+        <div class="stat pink"><div class="stat-num" id="resNg">0</div>틀린 문제</div>
+        <div class="stat sky"><div class="stat-num" id="resRate">0%</div>정답률</div>
+      </div>
+      <p class="record hidden" id="resRecord"></p>
+    </div>
+
+    <div class="card hidden" id="wrongCard">
+      <h2>📝 다시 볼 문제</h2>
+      <ul class="wrong-list" id="wrongList"></ul>
+      <button class="btn big lav" onclick="startReview()">틀린 문제 다시 연습</button>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn big mint" onclick="retry()">🔁 다시 하기</button>
+      <button class="btn big peach" onclick="goHome(true)">🏠 처음으로</button>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ===================== 설정 ===================== */
+const RANDOM_COUNT = 20;   // 랜덤 연습 문제 수
+const REAL_SECONDS = 60;   // 실전 모드 제한 시간(초)
+
+/* ===================== 상태 ===================== */
+const $ = id => document.getElementById(id);
+const state = {
+  mode:null, dan:null, queue:[], idx:0, a:0, b:0, input:'',
+  correct:0, wrong:0, wrongList:[], locked:true, running:false, lastKey:'',
+  endTime:0, timerId:null, cdTimer:null, fbTimeout:null,
+  reviewItems:[], reviewSource:[]
+};
+let last = { mode:null, dan:null, review:[] };
+
+/* ===================== 저장소 ===================== */
+function loadNum(key, def){
+  try{ const v = parseInt(localStorage.getItem(key), 10); return isNaN(v) ? def : v; }
+  catch(e){ return def; }
+}
+function saveNum(key, val){ try{ localStorage.setItem(key, String(val)); }catch(e){} }
+let best = loadNum('gugu_best', 0);
+let soundOn = loadNum('gugu_sound', 1) === 1;
+
+/* ===================== 소리 ===================== */
+let audioCtx = null;
+function beep(freqs, dur = 0.12, type = 'sine'){
+  if(!soundOn) return;
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    freqs.forEach((f, i) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      const t = audioCtx.currentTime + i * dur;
+      o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.2, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+    });
+  }catch(e){}
+}
+const sndGood = () => beep([660, 880], 0.11);
+const sndBad  = () => beep([220, 180], 0.16, 'triangle');
+const sndTick = () => beep([520], 0.1);
+const sndEnd  = () => beep([523, 659, 784, 1047], 0.12);
+
+function toggleSound(){
+  soundOn = !soundOn;
+  saveNum('gugu_sound', soundOn ? 1 : 0);
+  renderSoundBtn();
+}
+function renderSoundBtn(){
+  $('soundBtn').textContent = soundOn ? '🔊 소리 켜짐' : '🔇 소리 꺼짐';
+}
+
+/* ===================== 유틸 ===================== */
+const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){ const j = rand(0, i); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function animate(el, cls){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+function show(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('hidden', s.id !== id));
+  window.scrollTo(0, 0);
+}
+function randomQ(){
+  let a, b, key;
+  do{ a = rand(2, 9); b = rand(1, 9); key = a + 'x' + b; } while(key === state.lastKey);
+  state.lastKey = key;
+  return [a, b];
+}
+function clearTimers(){
+  clearInterval(state.timerId); clearInterval(state.cdTimer); clearTimeout(state.fbTimeout);
+  state.timerId = state.cdTimer = state.fbTimeout = null;
+  $('countdown').classList.add('hidden');
+}
+
+/* ===================== 모드 시작 ===================== */
+function resetState(mode){
+  clearTimers();
+  Object.assign(state, {
+    mode, dan:null, queue:[], idx:0, input:'', correct:0, wrong:0,
+    wrongList:[], locked:true, running:true, lastKey:''
+  });
+}
+
+function startDan(d){
+  resetState('dan'); state.dan = d;
+  state.queue = shuffle([1,2,3,4,5,6,7,8,9]).map(b => [d, b]);
+  setupPlay(`🎯 ${d}단 연습`);
+  nextQuestion();
+}
+
+function startRandom(){
+  resetState('random');
+  for(let i = 0; i < RANDOM_COUNT; i++) state.queue.push(randomQ());
+  setupPlay('🎲 랜덤 연습');
+  nextQuestion();
+}
+
+function startReal(){
+  resetState('real');
+  setupPlay('⏱️ 실전 모드');
+  countdown(() => {
+    state.endTime = Date.now() + REAL_SECONDS * 1000;
+    state.timerId = setInterval(tick, 100);
+    tick();
+    nextQuestion();
+  });
+}
+
+function startReview(items){
+  const src = (items && items.length) ? items : state.reviewItems;
+  if(!src.length) return;
+  const copy = src.map(q => [q[0], q[1]]);
+  resetState('review');
+  state.reviewSource = copy;
+  state.queue = shuffle(copy);
+  setupPlay('📝 틀린 문제 복습');
+  nextQuestion();
+}
+
+function retry(){
+  if(last.mode === 'dan') startDan(last.dan);
+  else if(last.mode === 'random') startRandom();
+  else if(last.mode === 'real') startReal();
+  else if(last.mode === 'review') startReview(last.review);
+  else goHome(true);
+}
+
+/* ===================== 화면 준비 ===================== */
+function setupPlay(label){
+  const isReal = state.mode === 'real';
+  $('modeLabel').textContent = label;
+  $('timerWrap').classList.toggle('hidden', !isReal);
+  $('timerWrap').classList.remove('warn');
+  $('progressText').classList.toggle('hidden', isReal);
+  $('hintBtn').classList.toggle('hidden', isReal);
+  $('stopBtn').classList.toggle('hidden', isReal);
+  $('timerText').textContent = REAL_SECONDS;
+  $('timerFill').style.width = '100%';
+  $('qA').textContent = '?'; $('qB').textContent = '?';
+  setAnswer('');
+  setFeedback('', '');
+  $('hintBox').classList.add('hidden');
+  updateStats();
+  show('play');
+}
+
+function setAnswer(text, cls = ''){
+  const box = $('answerBox');
+  box.textContent = text || '?';
+  box.className = 'answer-box' + (text ? '' : ' empty') + (cls ? ' ' + cls : '');
+}
+function setFeedback(text, cls){
+  $('feedback').textContent = text;
+  $('feedback').className = 'feedback' + (cls ? ' ' + cls : '');
+}
+function updateStats(){
+  $('okCount').textContent = state.correct;
+  $('ngCount').textContent = state.wrong;
+  if(state.mode !== 'real'){
+    const len = state.queue.length;
+    $('progressText').textContent = `📖 ${Math.min(state.idx + 1, len)} / ${len}`;
+  }
+}
+
+/* ===================== 문제 진행 ===================== */
+function nextQuestion(){
+  if(!state.running) return;
+  let q;
+  if(state.mode === 'real'){
+    q = randomQ();
+  }else{
+    if(state.idx >= state.queue.length){ endGame(); return; }
+    q = state.queue[state.idx];
+  }
+  [state.a, state.b] = q;
+  state.input = '';
+  $('qA').textContent = state.a;
+  $('qB').textContent = state.b;
+  setAnswer('');
+  setFeedback('', '');
+  $('hintBox').classList.add('hidden');
+  updateStats();
+  state.locked = false;
+}
+
+function pressNum(d){
+  if(state.locked) return;
+  if(state.input === '0') state.input = '';
+  if(state.input.length >= 2) return;
+  state.input += d;
+  setAnswer(state.input);
+}
+
+function delNum(){
+  if(state.locked) return;
+  state.input = state.input.slice(0, -1);
+  setAnswer(state.input);
+}
+
+const praise = ['정답! 최고예요 🎉', '잘했어요 👏', '딩동댕! ⭐', '멋져요 💯', '완벽해요 🌈'];
+
+function submit(){
+  if(state.locked) return;
+  if(state.input === ''){
+    animate($('answerBox'), 'nudge');
+    setFeedback('숫자를 먼저 눌러 주세요 🙂', '');
+    return;
+  }
+  state.locked = true;
+  const a = state.a, b = state.b, ans = a * b, user = parseInt(state.input, 10);
+  const isReal = state.mode === 'real';
+  let delay;
+
+  if(user === ans){
+    state.correct++;
+    setAnswer(state.input, 'good');
+    setFeedback(praise[rand(0, praise.length - 1)], 'good');
+    sndGood();
+    delay = isReal ? 350 : 800;
+  }else{
+    state.wrong++;
+    state.wrongList.push({ a, b, ans, user });
+    setAnswer(state.input, 'bad');
+    let msg = `아쉬워요! ${a} × ${b} = ${ans}`;
+    if(state.mode === 'dan' || state.mode === 'review'){
+      state.queue.push([a, b]);     // 틀린 문제는 끝에 다시 출제
+      msg += ' (다시 나와요)';
+    }
+    setFeedback(msg, 'bad');
+    sndBad();
+    delay = isReal ? 1000 : 1900;
+  }
+  updateStats();
+  state.fbTimeout = setTimeout(() => {
+    if(!isReal) state.idx++;
+    nextQuestion();
+  }, delay);
+}
+
+function showHint(){
+  if(state.locked || state.mode === 'real') return;
+  const a = state.a, b = state.b;
+  let html = `<b>${a}</b>를 <b>${b}</b>번 더해요: ${Array(b).fill(a).join(' + ')}`;
+  if(b > 1) html += `<br>${a} × ${b - 1} = ${a * (b - 1)} 에 ${a}를 더하면 돼요!`;
+  $('hintBox').innerHTML = html;
+  $('hintBox').classList.remove('hidden');
+}
+
+/* ===================== 실전 모드 타이머 ===================== */
+function countdown(done){
+  const ov = $('countdown');
+  let n = 3;
+  ov.textContent = n;
+  ov.classList.remove('hidden');
+  animate(ov, 'pop'); sndTick();
+  state.cdTimer = setInterval(() => {
+    n--;
+    if(n > 0){ ov.textContent = n; animate(ov, 'pop'); sndTick(); }
+    else if(n === 0){ ov.textContent = '시작!'; animate(ov, 'pop'); beep([880], 0.2); }
+    else{
+      clearInterval(state.cdTimer); state.cdTimer = null;
+      ov.classList.add('hidden');
+      done();
+    }
+  }, 800);
+}
+
+function tick(){
+  const left = Math.max(0, state.endTime - Date.now());
+  const sec = Math.ceil(left / 1000);
+  $('timerText').textContent = sec;
+  $('timerFill').style.width = (left / (REAL_SECONDS * 10)) + '%';
+  $('timerWrap').classList.toggle('warn', sec <= 10);
+  if(left <= 0) endGame();
+}
+
+/* ===================== 결과 ===================== */
+function endGame(){
+  if(!state.running) return;
+  state.running = false;
+  state.locked = true;
+  clearTimers();
+  sndEnd();
+
+  const total = state.correct + state.wrong;
+  const rate = total ? Math.round(state.correct / total * 100) : 0;
+  last = { mode:state.mode, dan:state.dan, review: state.reviewSource.map(q => [q[0], q[1]]) };
+
+  // 제목과 메시지
+  let emoji, title, msg;
+  if(state.mode === 'real'){
+    emoji = state.correct >= 20 ? '🏆' : state.correct >= 10 ? '🎉' : '💪';
+    title = `${REAL_SECONDS}초 동안 ${state.correct}개 맞혔어요!`;
+    msg = total ? '빠르고 정확하게, 다음엔 더 많이!' : '다시 도전해 볼까요?';
+  }else if(total === 0){
+    emoji = '🙂'; title = '다음에 다시 해 봐요!'; msg = '아직 푼 문제가 없어요.';
+  }else if(rate >= 90){
+    emoji = '🏆'; title = '구구단 박사님이에요!'; msg = '정말 대단해요!';
+  }else if(rate >= 70){
+    emoji = '🎉'; title = '아주 잘했어요!'; msg = '조금만 더 하면 완벽해요.';
+  }else if(rate >= 50){
+    emoji = '😊'; title = '잘하고 있어요!'; msg = '틀린 문제를 한 번 더 연습해 봐요.';
+  }else{
+    emoji = '💪'; title = '괜찮아요, 다시 해 볼까요?'; msg = '연습하면 꼭 잘하게 돼요!';
+  }
+  const stars = !total ? 0 : rate >= 90 ? 3 : rate >= 70 ? 2 : rate >= 40 ? 1 : 0;
+
+  $('resEmoji').textContent = emoji;
+  $('resTitle').textContent = title;
+  $('resMsg').textContent = msg;
+  $('resStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  $('resOk').textContent = state.correct;
+  $('resNg').textContent = state.wrong;
+  $('resRate').textContent = rate + '%';
+
+  // 실전 모드 최고 기록
+  const rec = $('resRecord');
+  if(state.mode === 'real'){
+    if(state.correct > best){
+      best = state.correct; saveNum('gugu_best', best);
+      rec.textContent = `🏆 새 최고 기록! ${best}개`;
+    }else{
+      rec.textContent = `🏆 최고 기록: ${best}개`;
+    }
+    rec.classList.remove('hidden');
+  }else{
+    rec.classList.add('hidden');
+  }
+
+  // 오답 목록 (같은 문제는 묶어서 표시)
+  const map = new Map();
+  state.wrongList.forEach(w => {
+    const k = w.a + 'x' + w.b;
+    if(!map.has(k)) map.set(k, { a:w.a, b:w.b, ans:w.ans, mine:[w.user] });
+    else map.get(k).mine.push(w.user);
+  });
+  const uniq = [...map.values()].sort((x, y) => x.a - y.a || x.b - y.b);
+  state.reviewItems = uniq.map(w => [w.a, w.b]);
+
+  const list = $('wrongList');
+  list.innerHTML = '';
+  uniq.forEach(w => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="wq">${w.a} × ${w.b} = <b>${w.ans}</b></span>
+                    <span class="wm">내 답: ${w.mine.join(', ')}</span>`;
+    list.appendChild(li);
+  });
+  $('wrongCard').classList.toggle('hidden', uniq.length === 0);
+
+  renderBest();
+  show('result');
+}
+
+/* ===================== 홈 ===================== */
+function goHome(force){
+  const inProgress = state.running && (state.correct + state.wrong > 0 || state.mode === 'real');
+  if(!force && inProgress && !confirm('처음 화면으로 갈까요?\n지금 푼 기록은 저장되지 않아요.')) return;
+  clearTimers();
+  state.running = false;
+  state.locked = true;
+  renderBest();
+  show('home');
+}
+function renderBest(){ $('bestScore').textContent = best; }
+
+function buildDanGrid(){
+  const colors = ['pink', 'mint', 'sky', 'yellow', 'lav', 'peach', 'mint', 'pink'];
+  const grid = $('danGrid');
+  for(let d = 2; d <= 9; d++){
+    const btn = document.createElement('button');
+    btn.className = 'btn dan ' + colors[d - 2];
+    btn.textContent = d + '단';
+    btn.onclick = () => startDan(d);
+    grid.appendChild(btn);
+  }
+}
+
+/* ===================== 키보드 ===================== */
+document.addEventListener('keydown', e => {
+  if($('play').classList.contains('hidden')) return;
+  if(/^[0-9]$/.test(e.key)) pressNum(e.key);
+  else if(e.key === 'Backspace'){ e.preventDefault(); delNum(); }
+  else if(e.key === 'Enter'){ e.preventDefault(); submit(); }
+});
+
+/* ===================== 초기화 ===================== */
+buildDanGrid();
+renderBest();
+renderSoundBtn();
+</script>
+</body>
+</html>
